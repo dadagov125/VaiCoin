@@ -27,18 +27,21 @@ import {Transaction} from "./transaction";
 import {Peer} from "./peer";
 import {createHash} from 'crypto'
 import {Address} from "./address";
+import {Signature} from "./signature";
 
 export class BlockChain {
 
 
     chain: Array<Block> = [];
-
-    newTransactions: Array<Transaction> = [];
     allPeers: Array<Peer> = [];
     peer: Peer;
 
-    constructor(peer: Peer) {
-        this.peer = peer
+    private _newTransactions: Array<Transaction> = [];
+    private _signature: Signature;
+
+    constructor(peer: Peer, signature: Signature) {
+        this.peer = peer;
+        this._signature = signature
     }
 
     lastBlock() {
@@ -56,58 +59,55 @@ export class BlockChain {
         return new Block(this.chain.length, Date.now(), [], 0, '', this.lastBlockHash())
     }
 
-    getProofData(block: Block) {
-        return `${block.index}${block.timestamp}${JSON.stringify(block.transactions)}${block.proof}${block.previousHash}`
-    }
 
-    mineBlock() {
+    mine() {
+        let transactions = [new Transaction(new Address(""), this.peer.address, 100)];
+        transactions = transactions.concat(this._newTransactions);
+        this._newTransactions = [];
 
-        let transactions = this.newTransactions.filter((value, index, array) => {
-            true
-        });
-        transactions.push(new Transaction(new Address(""), this.peer.address, 100));
-
-        let hash = '';
         let block = this.createRawBlock();
         block.transactions = transactions;
-        while (!this.verifyProof(this.getProofData(block))) {
-            block.proof++
-        }
-        block.hash = hash;
-
+        block.hash = this.getHash(block);
         this.chain.push(block);
         return block
     }
 
-    verifyProof(proofData: string) {
+    verifyBlock(block: Block) {
+        return this.verifyProofData(this.getProofData(block)) !== false
+    }
+
+    verifyProofData(proofData: string): string | boolean {
         let hash = this.getSha256(proofData);
-        return hash.startsWith('0000') ? hash : null
+        return hash.startsWith('0000') ? hash : false
 
     }
 
+    verifyTransaction(transaction: Transaction): boolean {
+        return this._signature.verify(transaction.getTransferData(), transaction.signature)
+    }
+
+    addTransaction(transaction: Transaction) {
+        if (this.verifyTransaction(transaction)) {
+            this._newTransactions.push(transaction)
+        }
+    }
+
+    getProofData(block: Block) {
+        return `${block.index}${block.timestamp}${JSON.stringify(block.transactions)}${block.proof}${block.previousHash}`
+    }
+
+    getHash(block: Block) {
+        let hash: string | boolean;
+        while (!(hash = this.verifyProofData(this.getProofData(block)))) {
+            block.proof++
+        }
+        return hash.toString()
+    }
 
     getSha256(text: string) {
         const hasher = createHash('sha256');
         hasher.update(text);
         return hasher.digest('hex')
-    }
-
-
-    createProofOfWork(lastProofOfWork: number, previousHash: string) {
-
-        let pow: number = 0;
-        while (!this.isValidProof(lastProofOfWork, pow, previousHash)) {
-            pow++
-        }
-        return pow;
-    }
-
-    isValidProof(lastProofOfWork: number, pow: number, previousHash: string) {
-        let guess = `${lastProofOfWork}${pow}${previousHash}`;
-        let result = this.getSha256(guess);
-        if (result.startsWith('0000'))
-            return true;
-        else false
     }
 
 

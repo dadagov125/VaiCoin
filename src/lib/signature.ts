@@ -31,33 +31,42 @@ export class Signature {
 
     private _encrypter: any;
     private _storePath: string;
+    _keyPair: KeyPair;
 
     constructor(storePath: string) {
         this._encrypter = new EC('secp256k1');
         this._storePath = storePath;
+        this.initAsync()
+
     }
 
-
-    async signAsync(data: string) {
-
-        let keyPair: KeyPair = await this.importKeyPairFromFileAsync(this._storePath);
-        let privKeyPair = this._encrypter.keyFromPrivate(keyPair.privateKey);
+    sign(data: string): string {
+        let privKeyPair = this._encrypter.keyFromPrivate(this._keyPair.privateKey);
         return privKeyPair.sign(data).toDER('hex')
     }
 
-    async verifyAsync(originData: string, signature: string) {
-        let keyPair: KeyPair = await this.importKeyPairFromFileAsync(this._storePath);
-        let privKeyPair = this._encrypter.keyFromPrivate(keyPair.privateKey);
+    verify(originData: string, signature: string): boolean {
+        let privKeyPair = this._encrypter.keyFromPrivate(this._keyPair.privateKey);
         return privKeyPair.verify(originData, signature)
     }
 
-    generateKey() {
+    generateKeys(): string {
         let genKeyPair = this._encrypter.genKeyPair();
         let pubKey = genKeyPair.getPublic('hex');
         let privKey = genKeyPair.getPrivate('hex');
         let keyPair: KeyPair = new KeyPair(pubKey, privKey);
+        this._keyPair = keyPair;
         this.exportKeyPairToFile(this._storePath, keyPair);
         return pubKey
+    }
+
+    private async initAsync() {
+        if (!this._keyPair) {
+            this._keyPair = await this.importKeyPairFromFileAsync(this._storePath);
+            if (!this._keyPair) {
+                this.generateKeys()
+            }
+        }
     }
 
     private exportKeyPairToFile(path: string, keyPair: KeyPair) {

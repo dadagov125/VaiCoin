@@ -28,6 +28,7 @@ import {Wallet} from "../../lib/wallet";
 import {BlockChain} from "../../lib/blockChain";
 import {Peer} from "../../lib/peer";
 import {Signature} from "../../lib/signature";
+import {Address} from "../../lib/address";
 
 let path = './keys.json';
 
@@ -36,42 +37,29 @@ describe('Blockchain', async () => {
     let signature = new Signature(path);
     let wallet = new Wallet(signature);
     let peer = new Peer(wallet.address, 'localhost', 9595);
-    let blockchain = new BlockChain(peer);
+    let blockchain = new BlockChain(peer, signature);
     let msg = "test";
 
-    it('chain is not empty, check genesis block', async () => {
 
-        assert.notEqual(blockchain.chain.length, 0);
-        assert.equal(blockchain.chain[0].previousHash, '1')
-    });
-
-    //
-    // it('create new block success', async () => {
-    //
-    //     let block=blockchain.createBlock(100)
-    //     assert.isNotNull(block)
-    //     assert.equal(block.previousHash.length,64)
-    // });
 
 
     it('mine success', async () => {
-        blockchain = new BlockChain(peer);
-        let block = blockchain.mineBlock();
-        block = blockchain.mineBlock();
-        block = blockchain.mineBlock();
-        block = blockchain.mineBlock();
-        block = blockchain.mineBlock();
-        block = blockchain.mineBlock();
-        block = blockchain.mineBlock();
-        block = blockchain.mineBlock();
-        block = blockchain.mineBlock();
-        block = blockchain.mineBlock();
-        block = blockchain.mineBlock();
-        block = blockchain.mineBlock();
-        block = blockchain.mineBlock();
+
+        let transaction = wallet.transfer(new Address('ss'), 222);
+
+        blockchain = new BlockChain(peer, signature);
+        blockchain.addTransaction(transaction);
+
+        let block = blockchain.mine();
+
+        let block2 = blockchain.mine();
 
 
-        assert.isNotNull(block)
+        assert.isNotNull(block);
+        assert.isNotNull(block2);
+        assert.equal(block.previousHash, 'genesis');
+        assert.equal(block.hash, block2.previousHash)
+
     });
 
 

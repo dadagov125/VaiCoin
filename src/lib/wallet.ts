@@ -31,7 +31,7 @@ import {Signature} from "./signature";
 export class Wallet {
 
     address: Address;
-    _signature: Signature;
+    private _signature: Signature;
 
     constructor(signature: Signature) {
         this._signature = signature;
@@ -39,15 +39,15 @@ export class Wallet {
     }
 
 
-    async transfer(recipient: Address, amount: number) {
+    transfer(recipient: Address, amount: number): Transaction {
         let transaction: Transaction = new Transaction(this.address, recipient, amount);
         let transferData = transaction.getTransferData();
-        transaction.signature = await this._signature.signAsync(transferData);
+        transaction.signature = this._signature.sign(transferData);
         return transaction
     }
 
     private _generateNewAddress() {
-        let pubKey = this._signature.generateKey();
+        let pubKey = this._signature.generateKeys();
         this.address = new Address(pubKey)
     }
 

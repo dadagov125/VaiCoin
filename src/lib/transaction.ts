@@ -29,9 +29,9 @@ export class Transaction {
     sender: Address;
     recipient: Address;
     amount: number;
-    signature?: string;
+    signature: string;
 
-    constructor(sender: Address, recipient: Address, amount: number, signature?: string) {
+    constructor(sender: Address, recipient: Address, amount: number, signature: string = '') {
         this.sender = sender;
         this.recipient = recipient;
         this.amount = amount;
