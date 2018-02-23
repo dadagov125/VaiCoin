@@ -27,12 +27,14 @@ import 'mocha';
 import {Wallet} from "../../lib/wallet";
 import {BlockChain} from "../../lib/blockChain";
 import {Peer} from "../../lib/peer";
+import {Signature} from "../../lib/signature";
 
 let path = './keys.json';
 
 
 describe('Blockchain', async () => {
-    let wallet = new Wallet(path);
+    let signature = new Signature(path);
+    let wallet = new Wallet(signature);
     let peer = new Peer(wallet.address, 'localhost', 9595);
     let blockchain = new BlockChain(peer);
     let msg = "test";

@@ -22,68 +22,32 @@
  SOFTWARE.
  */
 
-import * as fs from 'fs'
+
 import {Transaction} from "./transaction";
 import {Address} from "./address";
-import {KeyPair} from "./keyPair";
-
-let EC = require('elliptic').ec;
+import {Signature} from "./signature";
 
 
 export class Wallet {
 
     address: Address;
+    _signature: Signature;
 
-    private _encrypter: any;
-    private _storePath: string;
-
-    constructor(storePath: string) {
-        this._encrypter = new EC('secp256k1');
-        this._storePath = storePath;
+    constructor(signature: Signature) {
+        this._signature = signature;
         if (!this.address) this._generateNewAddress()
     }
 
-    exportKeyPairToFile(path: string, keyPair: KeyPair) {
-        fs.writeFile(path, JSON.stringify(keyPair), (err) => {
-        })
-    }
-
-    importKeyPairFromFileAsync(path: string): Promise<KeyPair> {
-        return new Promise((resolve, reject) => {
-            fs.readFile(path, (er, data: Buffer) => {
-                let keyPair: KeyPair = JSON.parse(data.toString());
-                resolve(keyPair)
-            })
-
-        })
-    }
-
-    async signAsync(data: string) {
-
-        let keyPair: KeyPair = await this.importKeyPairFromFileAsync(this._storePath);
-        let privKeyPair = this._encrypter.keyFromPrivate(keyPair.privateKey);
-        return privKeyPair.sign(data).toDER('hex')
-    }
-
-    async verifyAsync(originData: string, signature: string) {
-        let keyPair: KeyPair = await this.importKeyPairFromFileAsync(this._storePath);
-        let privKeyPair = this._encrypter.keyFromPrivate(keyPair.privateKey);
-        return privKeyPair.verify(originData, signature)
-    }
 
     async transfer(recipient: Address, amount: number) {
         let transaction: Transaction = new Transaction(this.address, recipient, amount);
         let transferData = transaction.getTransferData();
-        transaction.signature = await this.signAsync(transferData);
+        transaction.signature = await this._signature.signAsync(transferData);
         return transaction
     }
 
     private _generateNewAddress() {
-        let genKeyPair = this._encrypter.genKeyPair();
-        let pubKey = genKeyPair.getPublic('hex');
-        let privKey = genKeyPair.getPrivate('hex');
-        let keyPair: KeyPair = new KeyPair(pubKey, privKey);
-        this.exportKeyPairToFile(this._storePath, keyPair);
+        let pubKey = this._signature.generateKey();
         this.address = new Address(pubKey)
     }
 

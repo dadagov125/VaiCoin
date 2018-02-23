@@ -24,28 +24,28 @@
 
 import {assert} from 'chai';
 import 'mocha';
-import {Wallet} from "../../lib/wallet";
 
 let path = './keys.json';
 
 
-describe('Wallet', async () => {
-    let wallet = new Wallet(path);
-    let msg = "test";
-    it('Is Address not null', () => {
-        assert.isNotNull(wallet.address)
-    });
-
-    it('msg is signed', async () => {
-        let signature = await wallet.signAsync(msg);
-        assert.isNotNull(signature);
-        assert.isNotEmpty(signature)
-    });
-
-    it('signature is verified', async () => {
-        let signature = await wallet.signAsync(msg);
-        assert.isTrue(await wallet.verifyAsync(msg, signature))
-    })
-
-
-});
+// describe('Wallet', async () => {
+//     l
+//     let wallet = new Wallet(path);
+//     let msg = "test";
+//     it('Is Address not null', () => {
+//         assert.isNotNull(wallet.address)
+//     });
+//
+//     it('msg is signed', async () => {
+//         let signature = await wallet.signAsync(msg);
+//         assert.isNotNull(signature);
+//         assert.isNotEmpty(signature)
+//     });
+//
+//     it('signature is verified', async () => {
+//         let signature = await wallet.signAsync(msg);
+//         assert.isTrue(await wallet.verifyAsync(msg, signature))
+//     })
+//
+//
+// });
